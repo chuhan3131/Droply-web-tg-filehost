@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Droply - a convenient file hosting service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #0f0f17 0%, #1a1a2e 100%);
+      color: #e0e0e0;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #7e7eff, #5f9ea0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 16px;
+      max-width: 80%;
+      margin: 0 auto;
+    }
+
+    .card {
+      background-color: rgba(26, 26, 46, 0.9);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .file-input {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .file-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 30px;
+      border: 2px dashed #2d2d4d;
+      border-radius: 12px;
+      text-align: center;
+      transition: all 0.2s ease;
+      min-height: 200px;
+    }
+
+    .file-label:hover {
+      border-color: #3d3d72;
+      background-color: rgba(45, 45, 77, 0.2);
+    }
+
+    .file-label.drag-over {
+      border-color: #7e7eff;
+      background-color: rgba(126, 126, 255, 0.1);
+      transform: scale(1.02);
+    }
+
+    .file-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+      color: #7e7eff;
+    }
+
+    .file-label-text {
+      color: #888;
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+
+    .file-selected {
+      display: none;
+      color: #7e7eff;
+      font-weight: 500;
+      margin-top: 15px;
+      background: rgba(126, 126, 255, 0.1);
+      padding: 8px 15px;
+      border-radius: 20px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background-color: #2d2d4d;
+      border-radius: 3px;
+      margin: 15px 0;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #4c4c9c, #7e7eff);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(90deg, #3d3d72, #2d2d4d);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .result {
+      background-color: rgba(45, 145, 45, 0.15);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .result-title {
+      color: #3cb371;
+      font-weight: 500;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .result-link-container {
+      display: flex;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .result-link {
+      color: #5f9ea0;
+      word-break: break-all;
+      text-decoration: none;
+      padding: 10px 15px;
+      flex-grow: 1;
+    }
+
+    .copy-btn {
+      background: rgba(126, 126, 255, 0.2);
+      border: none;
+      color: #7e7eff;
+      padding: 0 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(126, 126, 255, 0.3);
+    }
+
+    .upload-info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(26, 26, 46, 0.9);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 28px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .file-label {
+        padding: 30px 20px;
+        min-height: 180px;
+      }
+
+      .file-label-text {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Droply</h1>
+      <p class="subtitle">Simple and secure file sharing</p>
+    </header>
+
+    <div class="card">
+      <form class="upload-form" id="uploadForm">
+        <div class="file-input-wrapper">
+          <input type="file" id="file" class="file-input" name="file" required>
+          <label for="file" class="file-label" id="fileLabel">
+            <div class="file-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <div class="file-label-text">Drag file or click to select</div>
+            <div class="file-selected" id="file-selected">File not selected</div>
+          </label>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+          <div class="progress" id="progress"></div>
+        </div>
+
+        <button type="submit" class="btn" id="uploadBtn">
+          <i class="fas fa-upload"></i> Upload file
+        </button>
+      </form>
+
+      <div class="result" id="result">
+        <div class="result-title">
+          <i class="fas fa-check-circle"></i> File uploaded successfully!
+        </div>
+        <div class="result-link-container">
+          <a href="#" class="result-link" id="downloadLink" target="_blank"></a>
+          <button class="copy-btn" id="copyBtn" title="Copy link">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
+        <div class="upload-info">
+          <span>Size: <span id="fileSize">0 MB</span></span>
+          <span>Time: <span id="uploadTime">0 sec</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Link copied to clipboard</span>
+  </div>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('file');
+      const fileSelected = document.getElementById('file-selected');
+      const fileLabel = document.getElementById('fileLabel');
+      const form = document.getElementById('uploadForm');
+      const result = document.getElementById('result');
+      const progressBar = document.getElementById('progressBar');
+      const progress = document.getElementById('progress');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const downloadLink = document.getElementById('downloadLink');
+      const copyBtn = document.getElementById('copyBtn');
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      const fileSizeElement = document.getElementById('fileSize');
+      const uploadTimeElement = document.getElementById('uploadTime');
+
+      fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+          const file = this.files[0];
+          fileSelected.innerHTML = `${file.name} <span style="color:#888;margin-left:8px;">(${formatFileSize(file.size)})</span>`;
+          fileSelected.style.display = 'block';
+        } else {
+          fileSelected.style.display = 'none';
+        }
+      });
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (fileInput.files.length === 0) return;
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('user_id', "0");
+
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        progressBar.style.display = 'block';
+        progress.style.width = "0%";
+
+        try {
+          const startTime = new Date().getTime();
+
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            const endTime = new Date().getTime();
+            const uploadTime = (endTime - startTime) / 1000;
+
+            downloadLink.href = data.download_url;
+            downloadLink.textContent = data.download_url;
+            fileSizeElement.textContent = formatFileSize(file.size);
+            uploadTimeElement.textContent = `${uploadTime.toFixed(1)} sec`;
+
+            progressBar.style.display = 'none';
+            result.style.display = 'block';
+            showToast('File uploaded successfully!');
+          } else {
+            showToast('Error: ' + (data.detail || 'Неизвестная ошибка'));
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Error loading');
+        } finally {
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload file';
+        }
+      });
+
+      copyBtn.addEventListener('click', function() {
+        navigator.clipboard.writeText(downloadLink.href)
+          .then(() => showToast('Link copied to clipboard'))
+          .catch(() => showToast('Failed to copy link'));
+      });
+
+      function showToast(message) {
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' byte';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        else return (bytes / 1048576).toFixed(1) + ' MB';
+      }
+    });
+  </script>
+</body>
+</html>
